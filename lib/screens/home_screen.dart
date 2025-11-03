@@ -1,57 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/beverage_providers.dart';
 import '../tokens.dart';
 import '../widgets/beverage_card.dart';
 import '../widgets/place_order_button.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  final Map<String, Map<String, int>> _quantities = {
-    for (final beverage in _beverages)
-      beverage.title: {
-        for (final size in beverage.prices.keys) size: 0,
-      },
-  };
-
-  bool get _hasSelections {
-    for (final entry in _quantities.values) {
-      for (final qty in entry.values) {
-        if (qty > 0) return true;
-      }
-    }
-    return false;
-  }
-
-  void _updateQuantity(String beverageTitle, String size, int quantity) {
-    setState(() {
-      _quantities[beverageTitle]?[size] = quantity;
-    });
-  }
-
-  void _resetBeverage(String beverageTitle) {
-    setState(() {
-      final sizes = _quantities[beverageTitle];
-      if (sizes == null) return;
-      for (final key in sizes.keys) {
-        sizes[key] = 0;
-      }
-    });
-  }
-
-  void _placeOrder() {
-    if (!mounted) return;
+  void _placeOrder(BuildContext context) {
     context.pushNamed('order');
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final beverages = ref.watch(beveragesProvider);
+    final quantities = ref.watch(beverageQuantitiesProvider);
+    final hasSelections = ref.watch(hasSelectionsProvider);
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -64,7 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, constraints) {
           final contentWidth = constraints.maxWidth;
           final horizontalPadding = Tokens.pApp * 2;
-          final availableWidth = (contentWidth - horizontalPadding).clamp(0.0, contentWidth);
+          final availableWidth =
+              (contentWidth - horizontalPadding).clamp(0.0, contentWidth);
           final columns = _columnsForWidth(availableWidth);
           const spacing = 20.0;
           final cardWidth = _cardWidthFor(availableWidth, columns, spacing);
@@ -78,16 +47,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   spacing: spacing,
                   runSpacing: spacing,
                   children: [
-                    for (final beverage in _beverages)
+                    for (final beverage in beverages)
                       SizedBox(
                         width: cardWidth,
                         child: BeverageCard(
                           title: beverage.title,
                           prices: beverage.prices,
-                          quantities: _quantities[beverage.title] ?? const {},
-                          onQuantityChanged: (size, quantity) =>
-                              _updateQuantity(beverage.title, size, quantity),
-                          onReset: () => _resetBeverage(beverage.title),
+                          quantities: quantities[beverage.title] ?? const {},
+                          onQuantityChanged: (size, quantity) => ref
+                              .read(beverageQuantitiesProvider.notifier)
+                              .updateQuantity(beverage.title, size, quantity),
+                          onReset: () => ref
+                              .read(beverageQuantitiesProvider.notifier)
+                              .resetBeverage(beverage.title),
                         ),
                       ),
                   ],
@@ -97,7 +69,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 260),
                     child: PlaceOrderButton(
-                      onPressed: _hasSelections ? _placeOrder : null,
+                      onPressed:
+                          hasSelections ? () => _placeOrder(context) : null,
                     ),
                   ),
                 ),
@@ -123,32 +96,3 @@ double _cardWidthFor(double maxWidth, int columns, double spacing) {
   final totalSpacing = spacing * (columns - 1);
   return (maxWidth - totalSpacing) / columns;
 }
-
-class _BeverageDefinition {
-  const _BeverageDefinition({
-    required this.title,
-    required this.prices,
-  });
-
-  final String title;
-  final Map<String, double> prices;
-}
-
-const List<_BeverageDefinition> _beverages = [
-  _BeverageDefinition(
-    title: 'Classic Lemonade',
-    prices: {'S': 2.49, 'M': 3.49, 'L': 4.49},
-  ),
-  _BeverageDefinition(
-    title: 'Strawberry Lemonade',
-    prices: {'S': 2.99, 'M': 3.99, 'L': 4.99},
-  ),
-  _BeverageDefinition(
-    title: 'Mint Limeade',
-    prices: {'S': 2.79, 'M': 3.79, 'L': 4.79},
-  ),
-  _BeverageDefinition(
-    title: 'Sparkling Lemonade',
-    prices: {'S': 3.29, 'M': 4.29, 'L': 5.29},
-  ),
-];

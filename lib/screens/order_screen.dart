@@ -1,103 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../providers/beverage_providers.dart';
 import '../tokens.dart';
+import '../widgets/checkout_button.dart';
+import '../widgets/order_field.dart';
 
-class OrderScreen extends StatefulWidget {
+class OrderScreen extends ConsumerWidget {
   const OrderScreen({super.key});
 
   @override
-  State<OrderScreen> createState() => _OrderScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedItems = ref.watch(selectedItemsProvider);
+    final total = selectedItems.fold<double>(
+      0,
+      (sum, item) => sum + item.totalPrice,
+    );
 
-class _OrderScreenState extends State<OrderScreen> {
-  final _formKey = GlobalKey<FormState>();
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left, color: Tokens.text),
           onPressed: () => context.pop(),
+          icon: const Icon(Icons.chevron_left, color: Tokens.text),
         ),
         title: const Text('Your Order'),
       ),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final contentWidth = constraints.maxWidth;
-          const horizontalPadding = Tokens.pApp * 2;
-          final availableWidth =
-              (contentWidth - horizontalPadding).clamp(0.0, contentWidth);
-          final columns = _columnsForWidth(availableWidth);
+          final width = constraints.maxWidth;
+          final horizontalPadding = Tokens.pApp * 2;
+          final availableWidth = (width - horizontalPadding).clamp(0.0, width);
+          final columns = availableWidth >= 720 ? 2 : 1;
+          const spacing = 24.0;
+          final fieldWidth =
+              columns == 1 ? availableWidth : (availableWidth - spacing) / columns;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(Tokens.pApp),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _OrderSection(
-                    title: 'Contact Information',
-                    columns: columns,
-                    children: const [
-                      _OrderField(
-                        label: 'First name',
-                        initialValue: 'Jane',
-                        textInputAction: TextInputAction.next,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _OrderSummary(
+                  items: selectedItems,
+                  total: total,
+                ),
+                if (selectedItems.isNotEmpty) const SizedBox(height: 24),
+                Wrap(
+                  spacing: spacing,
+                  runSpacing: 18,
+                  children: [
+                    for (final field in _orderFields)
+                      SizedBox(
+                        width: fieldWidth,
+                        child: OrderField(
+                          label: field.label,
+                          initialValue: field.initialValue,
+                          keyboardType: field.keyboardType,
+                        ),
                       ),
-                      _OrderField(
-                        label: 'Last name',
-                        initialValue: 'Doe',
-                        textInputAction: TextInputAction.next,
-                      ),
-                      _OrderField(
-                        label: 'Email address',
-                        initialValue: 'jane@example.com',
-                        keyboardType: TextInputType.emailAddress,
-                        textInputAction: TextInputAction.next,
-                      ),
-                      _OrderField(
-                        label: 'Phone number (10 digits)',
-                        initialValue: '4161234567',
-                        keyboardType: TextInputType.phone,
-                        textInputAction: TextInputAction.next,
-                      ),
-                    ],
+                  ],
+                ),
+                const SizedBox(height: 32),
+                Align(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 260),
+                    child: CheckoutButton(
+                      onPressed:
+                          selectedItems.isEmpty ? null : () => context.pop(),
+                    ),
                   ),
-                  const SizedBox(height: 32),
-                  _OrderSection(
-                    title: 'Payment',
-                    columns: columns,
-                    children: const [
-                      _OrderField(
-                        label: 'Cardholder name',
-                        initialValue: 'Jane Doe',
-                        textInputAction: TextInputAction.next,
-                      ),
-                      _OrderField(
-                        label: 'Card number',
-                        initialValue: '4242 4242 4242 4242',
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.next,
-                      ),
-                      _OrderField(
-                        label: 'Expiry (MM/YY)',
-                        initialValue: '12/28',
-                        keyboardType: TextInputType.datetime,
-                        textInputAction: TextInputAction.next,
-                      ),
-                      _OrderField(
-                        label: 'CVV',
-                        initialValue: '123',
-                        keyboardType: TextInputType.number,
-                        textInputAction: TextInputAction.done,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },
@@ -106,87 +80,157 @@ class _OrderScreenState extends State<OrderScreen> {
   }
 }
 
-class _OrderSection extends StatelessWidget {
-  const _OrderSection({
-    required this.title,
-    required this.children,
-    required this.columns,
-  });
-
-  final String title;
-  final List<_OrderField> children;
-  final int columns;
-
-  @override
-  Widget build(BuildContext context) {
-    const spacing = 20.0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Tokens.muted,
-              ),
-        ),
-        const SizedBox(height: 16),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final maxWidth = constraints.maxWidth;
-            final itemWidth = _fieldWidthFor(maxWidth, columns, spacing);
-            return Wrap(
-              spacing: spacing,
-              runSpacing: spacing,
-              children: [
-                for (final child in children)
-                  SizedBox(
-                    width: itemWidth,
-                    child: child,
-                  ),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
-
-class _OrderField extends StatelessWidget {
-  const _OrderField({
+class _OrderFieldData {
+  const _OrderFieldData({
     required this.label,
-    required this.initialValue,
+    this.initialValue,
     this.keyboardType,
-    this.textInputAction,
   });
 
   final String label;
-  final String initialValue;
+  final String? initialValue;
   final TextInputType? keyboardType;
-  final TextInputAction? textInputAction;
+}
+
+const _orderFields = [
+  _OrderFieldData(
+    label: 'First name',
+    initialValue: 'Jane',
+  ),
+  _OrderFieldData(
+    label: 'Last name',
+    initialValue: 'Doe',
+  ),
+  _OrderFieldData(
+    label: 'Email address',
+    initialValue: 'jane@example.com',
+    keyboardType: TextInputType.emailAddress,
+  ),
+  _OrderFieldData(
+    label: 'Phone number (10 digits)',
+    initialValue: '4161234567',
+    keyboardType: TextInputType.phone,
+  ),
+  _OrderFieldData(
+    label: 'Cardholder name',
+    initialValue: 'Jane Doe',
+  ),
+  _OrderFieldData(
+    label: 'Card number',
+    initialValue: '4242 4242 4242 4242',
+    keyboardType: TextInputType.number,
+  ),
+  _OrderFieldData(
+    label: 'Expiry (MM/YY)',
+    initialValue: '12/28',
+  ),
+  _OrderFieldData(
+    label: 'CVV',
+    initialValue: '123',
+    keyboardType: TextInputType.number,
+  ),
+];
+
+class _OrderSummary extends StatelessWidget {
+  const _OrderSummary({
+    required this.items,
+    required this.total,
+  });
+
+  final List<BeverageSelection> items;
+  final double total;
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      initialValue: initialValue,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      decoration: InputDecoration(
-        labelText: label,
+    if (items.isEmpty) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              const Icon(Icons.info_outline, color: Tokens.muted),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'No items selected yet. Please go back to add drinks.',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your Items',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Tokens.muted,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            for (final item in items) ...[
+              _OrderItemRow(item: item),
+              if (item != items.last) const SizedBox(height: 8),
+            ],
+            const Divider(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                Text(
+                  '\$${total.toStringAsFixed(2)}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-int _columnsForWidth(double width) {
-  if (width >= 1100) return 3;
-  if (width >= 700) return 2;
-  return 1;
-}
+class _OrderItemRow extends StatelessWidget {
+  const _OrderItemRow({required this.item});
 
-double _fieldWidthFor(double maxWidth, int columns, double spacing) {
-  if (columns <= 1) return maxWidth;
-  final gaps = spacing * (columns - 1);
-  return (maxWidth - gaps) / columns;
+  final BeverageSelection item;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Text(
+            '${item.quantity} × ${item.beverageTitle} (${item.size})',
+            style: theme.textTheme.bodyMedium,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          '\$${item.totalPrice.toStringAsFixed(2)}',
+          style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+      ],
+    );
+  }
 }

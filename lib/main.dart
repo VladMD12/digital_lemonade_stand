@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:window_size/window_size.dart';
 
@@ -15,13 +16,11 @@ void main() {
     setWindowMinSize(minimumWindowSize);
   }
 
-  runApp(const MainApp());
+  runApp(const ProviderScope(child: MainApp()));
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
-  static final GoRouter _router = GoRouter(
+final _routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
     routes: [
       GoRoute(
         path: '/',
@@ -37,13 +36,18 @@ class MainApp extends StatelessWidget {
       ),
     ],
   );
+});
+
+class MainApp extends ConsumerWidget {
+  const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(_routerProvider);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
-      routerConfig: _router,
+      routerConfig: router,
     );
   }
 }
