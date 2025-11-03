@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  go_router: ^14.2.2
   window_size: ^0.1.0
 
 dev_dependencies:

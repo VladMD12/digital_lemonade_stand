@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../tokens.dart';
 import '../widgets/beverage_card.dart';
@@ -45,12 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _placeOrder() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Order flow coming soon.'),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (!mounted) return;
+    context.pushNamed('order');
   }
 
   @override
