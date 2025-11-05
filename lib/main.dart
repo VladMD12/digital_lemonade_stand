@@ -1,12 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:window_size/window_size.dart';
 
+import 'app_router.dart';
 import 'theme.dart';
-import 'screens/home_screen.dart';
-import 'screens/order_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,31 +17,12 @@ void main() {
   runApp(const ProviderScope(child: MainApp()));
 }
 
-final _routerProvider = Provider<GoRouter>((ref) {
-  return GoRouter(
-    routes: [
-      GoRoute(
-        path: '/',
-        name: 'home',
-        builder: (context, state) => const HomeScreen(),
-        routes: [
-          GoRoute(
-            path: 'order',
-            name: 'order',
-            builder: (context, state) => const OrderScreen(),
-          ),
-        ],
-      ),
-    ],
-  );
-});
-
 class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(_routerProvider);
+    final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
