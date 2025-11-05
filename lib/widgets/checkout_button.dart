@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens.dart';
 
+/// Final action button used to close the faux checkout flow.
 class CheckoutButton extends StatelessWidget {
   const CheckoutButton({
     super.key,

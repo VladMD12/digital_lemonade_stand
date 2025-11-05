@@ -7,6 +7,7 @@ import '../tokens.dart';
 import '../widgets/checkout_button.dart';
 import '../widgets/order_field.dart';
 
+/// Displays the shopper's selections, faux checkout form, and totals.
 class OrderScreen extends ConsumerWidget {
   const OrderScreen({super.key});
 
@@ -82,6 +83,7 @@ class OrderScreen extends ConsumerWidget {
   }
 }
 
+/// Immutable description of each form field rendered on the order page.
 class _OrderFieldData {
   const _OrderFieldData({
     required this.label,
@@ -94,6 +96,7 @@ class _OrderFieldData {
   final TextInputType? keyboardType;
 }
 
+/// Demo checkout fields used to populate the faux payment form.
 const _orderFields = [
   _OrderFieldData(
     label: 'First name',
@@ -133,6 +136,7 @@ const _orderFields = [
   ),
 ];
 
+/// Shows either an empty-state card or a receipt-style list of items.
 class _OrderSummary extends StatelessWidget {
   const _OrderSummary({
     required this.items,
@@ -207,6 +211,7 @@ class _OrderSummary extends StatelessWidget {
   }
 }
 
+/// Renders a single line item within the order summary card.
 class _OrderItemRow extends StatelessWidget {
   const _OrderItemRow({required this.item});
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../providers/beverage_providers.dart';
 import '../tokens.dart';
 
+/// Catalog tile that renders lemonade artwork, pricing, and quantity controls.
 class BeverageCard extends StatelessWidget {
   const BeverageCard({
     super.key,
@@ -88,6 +89,7 @@ class BeverageCard extends StatelessWidget {
   }
 }
 
+/// Gradient card art paired with an icon to represent the lemonade flavor.
 class _BeverageArtwork extends StatelessWidget {
   const _BeverageArtwork({required this.visual});
 
@@ -144,6 +146,7 @@ class _BeverageArtwork extends StatelessWidget {
   }
 }
 
+/// Single row containing size/price text and increment/decrement controls.
 class _PriceRow extends StatelessWidget {
   const _PriceRow({
     required this.size,
@@ -203,6 +206,7 @@ class _PriceRow extends StatelessWidget {
   }
 }
 
+/// Compact icon button tailored for quantity adjustments.
 class _QuantityButton extends StatelessWidget {
   const _QuantityButton({
     required this.icon,

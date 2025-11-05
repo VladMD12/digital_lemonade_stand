@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tokens.dart';
 
+/// Primary call-to-action that navigates from the catalog to checkout.
 class PlaceOrderButton extends StatelessWidget {
   const PlaceOrderButton({
     super.key,

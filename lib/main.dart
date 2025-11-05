@@ -6,6 +6,7 @@ import 'package:window_size/window_size.dart';
 import 'app_router.dart';
 import 'theme.dart';
 
+/// Initializes platform bindings and boots the Digital Lemonade Stand app.
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   const Size minimumWindowSize = Size(800, 600);
@@ -17,6 +18,7 @@ void main() {
   runApp(const ProviderScope(child: MainApp()));
 }
 
+/// Root widget that configures theming and attaches the router.
 class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 

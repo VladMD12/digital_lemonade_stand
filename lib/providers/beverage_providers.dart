@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// Presentation metadata used to render lemonade artwork consistently.
 class BeverageVisual {
   const BeverageVisual({
     required this.gradient,
@@ -13,6 +14,7 @@ class BeverageVisual {
   final Color iconColor;
 }
 
+/// Static metadata describing an available lemonade flavor.
 class BeverageDefinition {
   const BeverageDefinition({
     required this.title,
@@ -25,6 +27,7 @@ class BeverageDefinition {
   final BeverageVisual visual;
 }
 
+/// Captures a shopper's in-progress selection for a specific beverage size.
 class BeverageSelection {
   const BeverageSelection({
     required this.beverageTitle,
@@ -41,6 +44,7 @@ class BeverageSelection {
   double get totalPrice => unitPrice * quantity;
 }
 
+/// Exposes the full lemonade catalog to the widget tree.
 final beveragesProvider = Provider<List<BeverageDefinition>>(
   (ref) => _beverages,
 );
@@ -50,6 +54,7 @@ final beverageQuantitiesProvider =
   (ref) => BeverageQuantitiesNotifier(ref.watch(beveragesProvider)),
 );
 
+/// Indicates whether the shopper has added at least one item to their order.
 final hasSelectionsProvider = Provider<bool>((ref) {
   final quantities = ref.watch(beverageQuantitiesProvider);
   for (final beverageEntry in quantities.values) {
@@ -60,6 +65,7 @@ final hasSelectionsProvider = Provider<bool>((ref) {
   return false;
 });
 
+/// Maps the quantity matrix into concrete order line items.
 final selectedItemsProvider = Provider<List<BeverageSelection>>((ref) {
   final beverages = ref.watch(beveragesProvider);
   final quantities = ref.watch(beverageQuantitiesProvider);
@@ -91,6 +97,7 @@ final selectedItemsProvider = Provider<List<BeverageSelection>>((ref) {
   return selections;
 });
 
+/// Manages quantity mutations for each lemonade/size combination.
 class BeverageQuantitiesNotifier
     extends StateNotifier<Map<String, Map<String, int>>> {
   BeverageQuantitiesNotifier(List<BeverageDefinition> beverages)
@@ -128,6 +135,7 @@ class BeverageQuantitiesNotifier
   }
 }
 
+/// Hard-coded set of sample lemonades used by the demo experience.
 const List<BeverageDefinition> _beverages = [
   BeverageDefinition(
     title: 'Classic Lemonade',
